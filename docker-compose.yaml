@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+  backend:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "uvicorn main:app --reload --port=8000 --host=0.0.0.0"
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    healthcheck:
+      test: "exit 0"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: workout_db
+
+volumes:
+  postgres_data:
+  backend:
