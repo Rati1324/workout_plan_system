@@ -15,3 +15,5 @@ Base.metadata.create_all(bind=engine)
 def main(db: Session = Depends(get_db)):
     users = db.query(User).all()
     return users
+
+@app.post("/register")
