@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, R
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
-from core.models import User
+# from core.models import User
 from core.config import Base, engine
 from core.schemas import UserSchema
 import re
