@@ -1,16 +1,19 @@
-import os, json
+import json
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
-# from core.models import User
+from core.models import User, Excercise, WorkoutPlan
 from core.config import Base, engine
-from core.schemas import UserSchema
+from core.schemas import UserSchema, WorkoutPlanSchema
 import re
+from seed_db import seed, clear
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
+# seed()
+# clear()
 @app.get("/")
 async def main(db: Session = Depends(get_db)):
     users = db.query(User).all()
@@ -53,7 +56,13 @@ async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestF
     token = create_jwt_token(user_data.username)
     return {"access_token": token, "token_type": "bearer"}
 
-@app.post("/secure_endpoint")
-async def secure(dependencies = Depends(get_current_user), db: Session = Depends(get_db), token: str = None):
+@app.post("/get_excercises")
+async def get_excercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+    return db.query(Excercise).all()
+
+@app.post("/create_plan")
+async def create_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
+    print(dependencies)
+    print(workout_plan)
     # get_current_user(db, token)
     return {"response": "hi"}
