@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import List
 
 class UserSchema(BaseModel):
     username: str = Field(default=None)
@@ -14,5 +15,5 @@ class WorkoutPlanSchema(BaseModel):
     frequency: int = Field(default=None)
     duration: float = Field(default=None)
     goals: str = Field(default=None)
-    excercises: list[ExcerciseWorkoutSchema] = Field(default=None)
+    excercises: List[ExcerciseWorkoutSchema] = Field(default=None)
 

@@ -70,33 +70,27 @@ async def get_excercises(dependencies = Depends(get_current_user), db: Session =
 
 @app.post("/create_plan")
 async def create_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
-    # print(dependencies)
     db_workout_plan = WorkoutPlan(
         user_id = dependencies.id,
         name = workout_plan.name,
         frequency = workout_plan.frequency,
         duration = workout_plan.duration,
-        goals = workout_plan.goals
+        goals = workout_plan.goals,
     )
-    print(db_workout_plan.excercises)
+    db.add(db_workout_plan)
+    db.commit()
 
-    # print(workout_plan.excercises)
-    # db.add(db_workout_plan)
-    # db.commit()
-    # add to database and return the id
-    # db.add(db_workout_plan)
-    # db.commit()
+    plan_id = db_workout_plan.id
 
-    # workout_plan.excercises = workout_plan.excercises
-    # add excercises to workout_plan
-    # for excercise in workout_plan.excercises:
-    #     db_excercise = ExcerciseWorkout(
-    #         excercise_id = excercise.id,
-    #         workout_id = db_workout_plan.id,
-    #         repetitions = excercise.repetitions,
-    #         sets = excercise.sets
-    #     )
-    #     db.add(db_excercise)
-    # db.commit()
-    # get_current_user(db, token)
+    for excercise in workout_plan.excercises:
+        print(excercise.repetitions)
+        db_excercise_workout = ExcerciseWorkout(
+            excercise_id = excercise.id,
+            workout_id = plan_id,
+            repetitions = excercise.repetitions,
+            sets = excercise.sets,
+        )
+        db_workout_plan.excercises.append(db_excercise_workout)
+        db.add(db_excercise_workout)
+    db.commit()
     return {"response": "hi"}
