@@ -14,14 +14,21 @@ class Excercise(Base):
     name: str = Column(String)
     description: str = Column(String)
     instructions: str = Column(String)
+    excercise_muscles = relationship("ExcerciseMuscle", back_populates="excercise")
 
 class ExcerciseMuscle(Base):
     __tablename__ = "excercise_muscle"
     id: int = Column(Integer, primary_key=True, index=True)
     excercise_id: int = Column(Integer, ForeignKey("excercise.id"))
     muscle_id: int = Column(Integer, ForeignKey("muscle.id"))
-    excercise = relationship("Excercise", backref="excercise_muscles")
-    muscle = relationship("Muscle", backref="excercise_muscles")
+    excercise = relationship("Excercise", back_populates="excercise_muscles")
+    muscle = relationship("Muscle", back_populates="excercise_muscles")
+
+class Muscle(Base):
+    __tablename__ = "muscle"
+    id: int = Column(Integer, primary_key=True, index=True)
+    name: str = Column(String)
+    excercise_muscles = relationship("ExcerciseMuscle", back_populates="muscle")
 
 class WorkoutPlan(Base):
     __tablename__ = "workout_plan"
@@ -43,9 +50,4 @@ class ExcerciseWorkout(Base):
     # workout = relationship("Workout", back_populates="excercises")
     excercise = relationship("Excercise", backref="excercises")
     workout = relationship("WorkoutPlan", backref="workout_plans")
-
-class Muscle(Base):
-    __tablename__ = "muscle"
-    id: int = Column(Integer, primary_key=True, index=True)
-    name: str = Column(String)
 

@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, R
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
-from core.models import User, Excercise, WorkoutPlan
+from core.models import User, Excercise, WorkoutPlan, ExcerciseMuscle
 from core.config import Base, engine
 from core.schemas import UserSchema, WorkoutPlanSchema
 import re
@@ -58,7 +58,15 @@ async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestF
 
 @app.post("/get_excercises")
 async def get_excercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    return db.query(Excercise).all()
+    excercises = db.query(Excercise).all()
+
+    result = []
+    for excercise in excercises:
+        muscles = []
+        for muscle in excercise.excercise_muscles:
+            muscles.append(muscle.muscle.name)
+        result.append({"id": excercise.id, "excercise": excercise.name, "muscles": muscles})
+    return result
 
 @app.post("/create_plan")
 async def create_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
