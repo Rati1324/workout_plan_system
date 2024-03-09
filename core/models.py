@@ -38,14 +38,14 @@ class WorkoutPlan(Base):
     duration: float = Column(Float)
     goals: str = Column(String)
     user_id: int = Column(Integer, ForeignKey("user.id"))
-    # user: User = relationship("User", back_populates="workouts")
-    # user = relationship("User", backref="excercises")
 
 class ExcerciseWorkout(Base):
     __tablename__ = "excercise_workout"
     id: int = Column(Integer, primary_key=True, index=True)
     excercise_id: int = Column(Integer, ForeignKey("excercise.id"))
     workout_id: int = Column(Integer, ForeignKey("workout_plan.id"))
+    repetitions: int = Column(Integer)
+    sets: int = Column(Integer)
     # excercise: Excercise = relationship("Excercise", back_populates="workouts")
     # workout = relationship("Workout", back_populates="excercises")
     excercise = relationship("Excercise", backref="excercises")
