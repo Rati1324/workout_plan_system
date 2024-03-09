@@ -23,4 +23,10 @@ class GoalSchema(BaseModel):
     weight: float = Field(default=None)
     sets: int = Field(default=None)
     repetitions: int = Field(default=None)
+    repetitions: int = Field(default=None)
     achieved: bool = Field(default=False)
+    date: str = Field(default=None)
+
+class WeightTrackerSchema(BaseModel):
+    weight: float = Field(default=None)
+    date: str = Field(default=None, example="2022-01-01")

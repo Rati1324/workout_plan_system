@@ -3,11 +3,12 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, R
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
-from core.models import User, Excercise, WorkoutPlan, ExcerciseMuscle, ExcerciseWorkout, Goal
+from core.models import User, Excercise, WorkoutPlan, ExcerciseWorkout, Goal, WeightTracker
 from core.config import Base, engine
-from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema
+from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTrackerSchema
 import re
 from seed_db import seed, clear
+from datetime import datetime
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
@@ -97,6 +98,8 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
 
 @app.post("/create_goal")
 async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
+    if goal.date is None:
+        goal.date = datetime.now()
     db_goal = Goal(
         user_id = dependencies.id,
         excercise_id = goal.excercise_id,
@@ -104,8 +107,23 @@ async def create_goal(dependencies = Depends(get_current_user), db: Session = De
         sets = goal.sets,
         repetitions = goal.repetitions,
         achieved = goal.achieved,
+        date = goal.date,
     )
     db.add(db_goal)
     db.commit()
     return {"response": "Goal created successfully"}
-    
+ 
+@app.post("/track_weight")
+async def track_weight(dependencies = Depends(get_current_user), db: Session = Depends(get_db), weight_info: WeightTrackerSchema = None):
+    if weight_info.date is None:
+        weight_info.date = datetime.now()
+
+    db_weight = WeightTracker(
+        user_id = dependencies.id,
+        weight = weight_info.weight,
+        date = weight_info.date,
+    )
+
+    db.add(db_weight)
+    db.commit()
+    return {"response": "Weight tracked successfully"}
