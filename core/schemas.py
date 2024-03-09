@@ -17,3 +17,10 @@ class WorkoutPlanSchema(BaseModel):
     goals: str = Field(default=None)
     excercises: List[ExcerciseWorkoutSchema] = Field(default=None)
 
+class GoalSchema(BaseModel):
+    name: str = Field(default=None)
+    excercise_id: int = Field(default=None)
+    weight: float = Field(default=None)
+    sets: int = Field(default=None)
+    repetitions: int = Field(default=None)
+    achieved: bool = Field(default=False)

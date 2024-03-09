@@ -3,9 +3,9 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, R
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
-from core.models import User, Excercise, WorkoutPlan, ExcerciseMuscle, ExcerciseWorkout
+from core.models import User, Excercise, WorkoutPlan, ExcerciseMuscle, ExcerciseWorkout, Goal
 from core.config import Base, engine
-from core.schemas import UserSchema, WorkoutPlanSchema
+from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema
 import re
 from seed_db import seed, clear
 
@@ -93,4 +93,19 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
         db_workout_plan.excercises.append(db_excercise_workout)
         db.add(db_excercise_workout)
     db.commit()
-    return {"response": "hi"}
+    return {"response": "created successfully"}
+
+@app.post("/create_goal")
+async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
+    db_goal = Goal(
+        user_id = dependencies.id,
+        excercise_id = goal.excercise_id,
+        weight = goal.weight,
+        sets = goal.sets,
+        repetitions = goal.repetitions,
+        achieved = goal.achieved,
+    )
+    db.add(db_goal)
+    db.commit()
+    return {"response": "Goal created successfully"}
+    
