@@ -1,6 +1,7 @@
-import json
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, Request
+import json, time, asyncio
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, Request
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
 from core.models import User, Excercise, WorkoutPlan, ExcerciseWorkout, Goal, WeightTracker
@@ -9,16 +10,15 @@ from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTracke
 import re
 from seed_db import seed, clear
 from datetime import datetime
+from starlette.templating import Jinja2Templates
+
+templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
 
 # seed()
 # clear()
-@app.get("/")
-async def main(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return users
 
 @app.post("/register")
 async def register(user_data: UserSchema, db: Session = Depends(get_db)):
@@ -127,3 +127,28 @@ async def track_weight(dependencies = Depends(get_current_user), db: Session = D
     db.add(db_weight)
     db.commit()
     return {"response": "Weight tracked successfully"}
+
+# @app.get("/")
+# async def get(token: str):
+    # return workout html from templates folder
+    
+    # return HTMLResponse(html)
+
+@app.get("/temp")
+def temp(request: Request):
+    # user = get_current_user(token=token)
+    return templates.TemplateResponse("workout.html", {"request": request})
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        json_data = json.loads(data)
+        username = json_data["username"]
+        # await websocket.send_text(f"Message text was: {username}")
+        # send a countdown from 5 to 0
+        # wait 1 second between each message
+        for i in range(5, -1, -1):
+            await websocket.send_text(f"{i}...")
+            await asyncio.sleep(1)
