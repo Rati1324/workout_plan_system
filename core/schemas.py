@@ -5,7 +5,7 @@ class UserSchema(BaseModel):
     password: str = Field(default=None)
 
 class ExcerciseWorkoutSchema(BaseModel):
-    excercise_id: int = Field(default=None)
+    id: int = Field(default=None)
     repetitions: int = Field(default=None)
     sets: int = Field(default=None)
 
@@ -15,3 +15,4 @@ class WorkoutPlanSchema(BaseModel):
     duration: float = Field(default=None)
     goals: str = Field(default=None)
     excercises: list[ExcerciseWorkoutSchema] = Field(default=None)
+

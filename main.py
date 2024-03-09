@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Header, R
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
-from core.models import User, Excercise, WorkoutPlan, ExcerciseMuscle
+from core.models import User, Excercise, WorkoutPlan, ExcerciseMuscle, ExcerciseWorkout
 from core.config import Base, engine
 from core.schemas import UserSchema, WorkoutPlanSchema
 import re
@@ -70,7 +70,33 @@ async def get_excercises(dependencies = Depends(get_current_user), db: Session =
 
 @app.post("/create_plan")
 async def create_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
-    print(dependencies)
-    print(workout_plan)
+    # print(dependencies)
+    db_workout_plan = WorkoutPlan(
+        user_id = dependencies.id,
+        name = workout_plan.name,
+        frequency = workout_plan.frequency,
+        duration = workout_plan.duration,
+        goals = workout_plan.goals
+    )
+    print(db_workout_plan.excercises)
+
+    # print(workout_plan.excercises)
+    # db.add(db_workout_plan)
+    # db.commit()
+    # add to database and return the id
+    # db.add(db_workout_plan)
+    # db.commit()
+
+    # workout_plan.excercises = workout_plan.excercises
+    # add excercises to workout_plan
+    # for excercise in workout_plan.excercises:
+    #     db_excercise = ExcerciseWorkout(
+    #         excercise_id = excercise.id,
+    #         workout_id = db_workout_plan.id,
+    #         repetitions = excercise.repetitions,
+    #         sets = excercise.sets
+    #     )
+    #     db.add(db_excercise)
+    # db.commit()
     # get_current_user(db, token)
     return {"response": "hi"}
