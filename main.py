@@ -15,7 +15,7 @@ from starlette.templating import Jinja2Templates
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 # seed()
 # clear()
