@@ -139,7 +139,8 @@ def get_workout_plans_db(user_id: int, db: Session):
     for plan in workout_plans:
         excercises = []
         for excercise in plan.excercises:
-            excercises.append({"id": excercise.excercise_id, "repetitions": excercise.repetitions, "sets": excercise.sets})
+            excercise_name = db.query(Excercise).filter_by(id=excercise.excercise_id).first().name
+            excercises.append({"id": excercise.excercise_id, "name": excercise_name, "repetitions": excercise.repetitions, "sets": excercise.sets})
         result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "excercises": excercises})
     return result
 
