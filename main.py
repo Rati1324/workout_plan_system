@@ -158,6 +158,8 @@ def temp(request: Request):
     # user = get_current_user(token=token)
     return templates.TemplateResponse("workout.html", {"request": request})
 
+r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
+
 @app.websocket("/workout_session")
 # async def websocket_endpoint(websocket: WebSocket, token: str):
 async def websocket_endpoint(websocket: WebSocket):
@@ -166,13 +168,12 @@ async def websocket_endpoint(websocket: WebSocket):
     # workout_plans = get_workout_plans_db(user_id=user.id, db=SessionLocal())
     # json_workout_plans = json.dumps(workout_plans)
     # await websocket.send_text(json_workout_plans)
-    r = redis.Redis(host='localhost', port=6379, decode_responses=True)
-    r.set("init", "init vkalue")
-    await websocket.send_text("connected")
-    try:
-        while True:
-            data = await websocket.receive_text()
-            value = "hi"
-            await websocket.send_text(f"store in redis: {value}")
-    except Exception:
-         print("WebSocket connection closed")
+    # await websocket.send_text("connected")
+    while True:
+        data = await websocket.receive_text()
+        if data == "store":
+            r.set("key", "value")
+            await websocket.send_text(f"stored in redis")
+        elif data == "retrieve":
+            value = r.get("key")
+            await websocket.send_text(f"value from redis: {value}")
