@@ -163,8 +163,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     user = get_current_user(db=SessionLocal(), token=token)
     workout_plans = get_workout_plans_db(user_id=user.id, db=SessionLocal())
     json_workout_plans = json.dumps(workout_plans)
-    print(json_workout_plans)
-    await websocket.send_text(f"workout_plans: {json_workout_plans}")
+    await websocket.send_text(json_workout_plans)
 
     # try:
     #     while True:

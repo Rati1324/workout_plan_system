@@ -23,8 +23,9 @@
                     ws.send(JSON.stringify(jsonData))
                 }
 
-                ws.onmessage = function(event2) {
-                    console.log(event2.data)
+                ws.onmessage = function(res) {
+                    var data = JSON.parse(res.data)
+                    console.log(data)
                     // var messages = document.getElementById('messages')
                     // var message = document.createElement('li')
                     // var content = document.createTextNode(event.data)
