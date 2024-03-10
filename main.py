@@ -11,6 +11,7 @@ import re
 from seed_db import seed, clear
 from datetime import datetime
 from starlette.templating import Jinja2Templates
+import redis
 
 templates = Jinja2Templates(directory="templates")
 
@@ -128,10 +129,9 @@ async def track_weight(dependencies = Depends(get_current_user), db: Session = D
     db.commit()
     return {"response": "Weight tracked successfully"}
 
-@app.post("/temp")
-async def get(token: str):
-    user = get_current_user(db=SessionLocal(), token=token)
-    print(user.username)
+@app.get("/temp")
+async def get():
+    return {"result": "result"}
 
 def get_workout_plans_db(user_id: int, db: Session):
     workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
@@ -159,18 +159,20 @@ def temp(request: Request):
     return templates.TemplateResponse("workout.html", {"request": request})
 
 @app.websocket("/workout_session")
-async def websocket_endpoint(websocket: WebSocket, token: str):
+# async def websocket_endpoint(websocket: WebSocket, token: str):
+async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    user = get_current_user(db=SessionLocal(), token=token)
-    workout_plans = get_workout_plans_db(user_id=user.id, db=SessionLocal())
-    json_workout_plans = json.dumps(workout_plans)
-    await websocket.send_text(json_workout_plans)
-
-    # try:
-    #     while True:
-    #         data = await websocket.receive_text()
-    #         # json_data = json.loads(data)
-    #         response = user.username
-    #         await websocket.send_text(f"username: {response}")
-    # except Exception:
-    #     print("WebSocket connection closed")
+    # user = get_current_user(db=SessionLocal(), token=token)
+    # workout_plans = get_workout_plans_db(user_id=user.id, db=SessionLocal())
+    # json_workout_plans = json.dumps(workout_plans)
+    # await websocket.send_text(json_workout_plans)
+    r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    r.set("init", "init vkalue")
+    await websocket.send_text("connected")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            value = "hi"
+            await websocket.send_text(f"store in redis: {value}")
+    except Exception:
+         print("WebSocket connection closed")

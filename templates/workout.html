@@ -25,45 +25,24 @@
                 }
 
                 ws.onmessage = function(res) {
-                    var data = JSON.parse(res.data)
-
-                    var sessions = document.getElementById('sessions')
-                    for (let session of data) {
-                        var sessionElem = document.createElement('h2')
-                        var content = document.createTextNode(session.name)
-                        sessionElem.appendChild(content)
-                        sessions.appendChild(sessionElem)
-                        var exercises = document.createElement('ul')
-                        for (let exercise of session.excercises) {
-                            var exerciseElem = document.createElement('li')
-                            var content = document.createTextNode(exercise.name)
-                            exerciseElem.appendChild(content)
-                            exercises.appendChild(exerciseElem)
-                        }
-                        console.log(exercises)
-                        sessions.appendChild(exercises)
-                    }
-                    // console.log(data)
-                    // // create list of items from data
-                    // // iterate through data and create list items
-                    // // create ordered list
-                    // var workouts = document.getElementById('workouts')
-                    // for (let plan of data) {
-                    //     let planElem = document.createElement('li')
-                    //     planElem.id = plan.id
-                    //     for (let item of plan.excercises) {
-                    //         var workout = document.createElement('li')
-                    //         var content = document.createTextNode(item.name)
-                    //         workout.appendChild(content)
-                    //         planElem.appendChild(workout)
+                    // var data = JSON.parse(res.data)
+                    console.log(res.data)
+                    // var sessions = document.getElementById('sessions')
+                    // for (let session of data) {
+                    //     var sessionElem = document.createElement('h2')
+                    //     var content = document.createTextNode(session.name)
+                    //     sessionElem.appendChild(content)
+                    //     sessions.appendChild(sessionElem)
+                    //     var exercises = document.createElement('ul')
+                    //     for (let exercise of session.excercises) {
+                    //         var exerciseElem = document.createElement('li')
+                    //         var content = document.createTextNode(exercise.name)
+                    //         exerciseElem.appendChild(content)
+                    //         exercises.appendChild(exerciseElem)
                     //     }
+                    //     console.log(exercises)
+                    //     sessions.appendChild(exercises)
                     // }
-                    
-                    // var messages = document.getElementById('messages')
-                    // var message = document.createElement('li')
-                    // var content = document.createTextNode(event.data)
-                    // message.appendChild(content)
-                    // messages.appendChild(message)
                 };
                 input.value = ''
                 event.preventDefault()
