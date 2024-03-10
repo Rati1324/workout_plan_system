@@ -46,7 +46,6 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
         user = db.query(User).filter_by(username=username).first()
         if user is None:
             raise credential_exception
-
         return user
     except jwt.JWTError:
         raise credential_exception

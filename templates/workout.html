@@ -5,26 +5,30 @@
     </head>
     <body>
         <h1>WebSocket Chat</h1>
-        <form action="" onsubmit="sendMessage(event)">
-            <input type="text" id="messageText" autocomplete="off"/>
-            <button>Send</button>
-        </form>
+        <input type="text" id="token"/>
+        <button onClick="sendMessage(event)">Send</button>
         <ul id='messages'>
         </ul>
         <script>
-            var ws = new WebSocket("ws://localhost:8000/ws");
-            ws.onmessage = function(event) {
-                var messages = document.getElementById('messages')
-                var message = document.createElement('li')
-                var content = document.createTextNode(event.data)
-                message.appendChild(content)
-                messages.appendChild(message)
-            };
+            
             function sendMessage(event) {
-                var token 
-                var input = document.getElementById("messageText")
-                var jsonData = JSON.stringify({"username": "test", "password": "test"})
-                ws.send(jsonData)
+                var input = document.getElementById("token")
+                console.log(input.value)
+                var ws = new WebSocket(`ws://localhost:8000/workout_session?token=${input.value}`);
+                ws.onmessage = function(event) {
+                    var messages = document.getElementById('messages')
+                    var message = document.createElement('li')
+                    var content = document.createTextNode(event.data)
+                    message.appendChild(content)
+                    messages.appendChild(message)
+                };
+                ws.onopen = function(event) {
+                    console.log('Connected')
+                    var jsonData = {
+                        token: input.value
+                    };
+                    ws.send(JSON.stringify(jsonData))
+                }
                 input.value = ''
                 event.preventDefault()
             }

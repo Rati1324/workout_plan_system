@@ -3,9 +3,9 @@ from fastapi import FastAPI, Depends, HTTPException, WebSocket, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
-from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user
+from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user, oauth2_scheme
 from core.models import User, Excercise, WorkoutPlan, ExcerciseWorkout, Goal, WeightTracker
-from core.config import Base, engine
+from core.config import Base, engine, SessionLocal
 from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTrackerSchema
 import re
 from seed_db import seed, clear
@@ -128,27 +128,26 @@ async def track_weight(dependencies = Depends(get_current_user), db: Session = D
     db.commit()
     return {"response": "Weight tracked successfully"}
 
-# @app.get("/")
-# async def get(token: str):
-    # return workout html from templates folder
-    
-    # return HTMLResponse(html)
+@app.post("/temp")
+async def get(token: str):
+    user = get_current_user(db=SessionLocal(), token=token)
+    print(user.username)
 
-@app.get("/temp")
+@app.get("/workout_template")
 def temp(request: Request):
     # user = get_current_user(token=token)
     return templates.TemplateResponse("workout.html", {"request": request})
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+@app.websocket("/workout_session")
+async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        json_data = json.loads(data)
-        username = json_data["username"]
-        # await websocket.send_text(f"Message text was: {username}")
-        # send a countdown from 5 to 0
-        # wait 1 second between each message
-        for i in range(5, -1, -1):
-            await websocket.send_text(f"{i}...")
-            await asyncio.sleep(1)
+    user = get_current_user(db=SessionLocal(), token=token)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            json_data = json.loads(data)
+            message = json_data["token"]
+            await websocket.send_text(f"Message text was: {message}")
+    except Exception:
+        print("WebSocket connection closed")
