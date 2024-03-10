@@ -133,7 +133,6 @@ async def get(token: str):
     user = get_current_user(db=SessionLocal(), token=token)
     print(user.username)
 
-# factor out the get_workout_plans function
 def get_workout_plans_db(user_id: int, db: Session):
     workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
     result = []
@@ -144,7 +143,6 @@ def get_workout_plans_db(user_id: int, db: Session):
         result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "excercises": excercises})
     return result
 
-# create get workout plans endpoint
 @app.get("/get_workout_plans")
 async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
     # print(dependencies.id, "here")
@@ -159,20 +157,20 @@ def temp(request: Request):
     # user = get_current_user(token=token)
     return templates.TemplateResponse("workout.html", {"request": request})
 
-# @app.websocket("/workout_session")
-# async def websocket_endpoint(websocket: WebSocket, token: str):
-#     await websocket.accept()
-#     user = get_current_user(db=SessionLocal(), token=token)
-#     workout_plans = get_workout_plans(dependencies=user)
-#     json_workout_plans = json.dumps(workout_plans)
-#     # print(json_workout_plans)
-#     # await websocket.send_text(f"workout_plans: {json_workout_plans}")
+@app.websocket("/workout_session")
+async def websocket_endpoint(websocket: WebSocket, token: str):
+    await websocket.accept()
+    user = get_current_user(db=SessionLocal(), token=token)
+    workout_plans = get_workout_plans_db(user_id=user.id, db=SessionLocal())
+    json_workout_plans = json.dumps(workout_plans)
+    print(json_workout_plans)
+    await websocket.send_text(f"workout_plans: {json_workout_plans}")
 
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             # json_data = json.loads(data)
-#             response = user.username
-#             await websocket.send_text(f"username: {response}")
-#     except Exception:
-#         print("WebSocket connection closed")
+    # try:
+    #     while True:
+    #         data = await websocket.receive_text()
+    #         # json_data = json.loads(data)
+    #         response = user.username
+    #         await websocket.send_text(f"username: {response}")
+    # except Exception:
+    #     print("WebSocket connection closed")

@@ -14,7 +14,6 @@
             
             function auth(event) {
                 var input = document.getElementById("token")
-                console.log(input.value)
                 ws = new WebSocket(`ws://localhost:8000/workout_session?token=${input.value}`);
                 
                 ws.onopen = function(event) {
@@ -24,13 +23,13 @@
                     ws.send(JSON.stringify(jsonData))
                 }
 
-                ws.onmessage = function(event) {
-                    console.log(event.data)
-                    var messages = document.getElementById('messages')
-                    var message = document.createElement('li')
-                    var content = document.createTextNode(event.data)
-                    message.appendChild(content)
-                    messages.appendChild(message)
+                ws.onmessage = function(event2) {
+                    console.log(event2.data)
+                    // var messages = document.getElementById('messages')
+                    // var message = document.createElement('li')
+                    // var content = document.createTextNode(event.data)
+                    // message.appendChild(content)
+                    // messages.appendChild(message)
                 };
                 input.value = ''
                 event.preventDefault()
