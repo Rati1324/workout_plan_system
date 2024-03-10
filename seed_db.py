@@ -30,3 +30,26 @@ def clear():
     db.query(Muscle).delete()
     db.commit()
     db.close()
+
+#     {
+#   "name": "string",
+#   "frequency": 0,
+#   "duration": 0,
+#   "goals": "string",
+#   "excercises": [
+#     {
+#       "id": 1,
+#       "repetitions": 3,
+#       "sets": 1,
+#       "order": 1,
+#       "break_time": 60
+#     },
+#     {
+#       "id": 2,
+#       "repetitions": 2,
+#       "sets": 2,
+#       "order": 2,
+#       "break_time": 60
+#     }
+#   ]
+# }

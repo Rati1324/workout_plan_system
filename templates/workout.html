@@ -6,32 +6,36 @@
     <body>
         <h1>WebSocket Chat</h1>
         <input type="text" id="token"/>
-        <button onClick="sendMessage(event)">Send</button>
+        <button onClick="auth(event)">Send</button>
+        <button onClick="sendData(event)">Send Data</button>
         <ul id='messages'>
         </ul>
         <script>
             
-            function sendMessage(event) {
+            function auth(event) {
                 var input = document.getElementById("token")
                 console.log(input.value)
-                var ws = new WebSocket(`ws://localhost:8000/workout_session?token=${input.value}`);
+                ws = new WebSocket(`ws://localhost:8000/workout_session?token=${input.value}`);
+                
+                ws.onopen = function(event) {
+                    var jsonData = {
+                        token: input.value
+                    };
+                    ws.send(JSON.stringify(jsonData))
+                }
+
                 ws.onmessage = function(event) {
+                    console.log(event.data)
                     var messages = document.getElementById('messages')
                     var message = document.createElement('li')
                     var content = document.createTextNode(event.data)
                     message.appendChild(content)
                     messages.appendChild(message)
                 };
-                ws.onopen = function(event) {
-                    console.log('Connected')
-                    var jsonData = {
-                        token: input.value
-                    };
-                    ws.send(JSON.stringify(jsonData))
-                }
                 input.value = ''
                 event.preventDefault()
             }
+
         </script>
     </body>
 </html>

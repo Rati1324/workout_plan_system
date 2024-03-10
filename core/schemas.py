@@ -9,6 +9,8 @@ class ExcerciseWorkoutSchema(BaseModel):
     id: int = Field(default=None)
     repetitions: int = Field(default=None)
     sets: int = Field(default=None)
+    order: int = Field(default=None)
+    break_time: float = Field(default=None)
 
 class WorkoutPlanSchema(BaseModel):
     name: str = Field(default=None)

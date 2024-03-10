@@ -57,6 +57,8 @@ class ExcerciseWorkout(Base):
     workout_id: int = Column(Integer, ForeignKey("workout_plan.id"))
     repetitions: int = Column(Integer)
     sets: int = Column(Integer)
+    order: int = Column(Integer)
+    break_time: float = Column(Integer)
 
     excercise = relationship("Excercise", back_populates="excercise_workout")
     workout = relationship("WorkoutPlan", back_populates="excercises")
