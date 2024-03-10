@@ -4,8 +4,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user, oauth2_scheme
-from core.models import User, Excercise, WorkoutPlan, ExcerciseWorkout, Goal, WeightTracker
-from core.config import Base, engine, SessionLocal
+from core.models import User, Exercise, WorkoutPlan, ExerciseWorkout, Goal, WeightTracker
+from core.config import SessionLocal
 from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTrackerSchema
 import re
 from seed_db import seed, clear
@@ -57,16 +57,16 @@ async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestF
     token = create_jwt_token(user_data.username)
     return {"access_token": token, "token_type": "bearer"}
 
-@app.post("/get_excercises")
-async def get_excercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    excercises = db.query(Excercise).all()
+@app.post("/get_exercises")
+async def get_exercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+    exercises = db.query(exercise).all()
 
     result = []
-    for excercise in excercises:
+    for exercise in exercises:
         muscles = []
-        for muscle in excercise.excercise_muscles:
+        for muscle in exercise.exercise_muscles:
             muscles.append(muscle.muscle.name)
-        result.append({"id": excercise.id, "excercise": excercise.name, "muscles": muscles})
+        result.append({"id": exercise.id, "exercise": exercise.name, "muscles": muscles})
     return result
 
 @app.post("/create_plan")
@@ -83,16 +83,16 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
 
     plan_id = db_workout_plan.id
 
-    for excercise in workout_plan.excercises:
-        print(excercise.repetitions)
-        db_excercise_workout = ExcerciseWorkout(
-            excercise_id = excercise.id,
+    for exercise in workout_plan.exercises:
+        print(exercise.repetitions)
+        db_exercise_workout = exerciseWorkout(
+            exercise_id = exercise.id,
             workout_id = plan_id,
-            repetitions = excercise.repetitions,
-            sets = excercise.sets,
+            repetitions = exercise.repetitions,
+            sets = exercise.sets,
         )
-        db_workout_plan.excercises.append(db_excercise_workout)
-        db.add(db_excercise_workout)
+        db_workout_plan.exercises.append(db_exercise_workout)
+        db.add(db_exercise_workout)
     db.commit()
     return {"response": "created successfully"}
 
@@ -102,7 +102,7 @@ async def create_goal(dependencies = Depends(get_current_user), db: Session = De
         goal.date = datetime.now()
     db_goal = Goal(
         user_id = dependencies.id,
-        excercise_id = goal.excercise_id,
+        exercise_id = goal.exercise_id,
         weight = goal.weight,
         sets = goal.sets,
         repetitions = goal.repetitions,
@@ -137,11 +137,11 @@ def get_workout_plans_db(user_id: int, db: Session):
     workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
     result = []
     for plan in workout_plans:
-        excercises = []
-        for excercise in plan.excercises:
-            excercise_name = db.query(Excercise).filter_by(id=excercise.excercise_id).first().name
-            excercises.append({"id": excercise.excercise_id, "name": excercise_name, "repetitions": excercise.repetitions, "sets": excercise.sets})
-        result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "excercises": excercises})
+        exercises = []
+        for exercise in plan.exercises:
+            exercise_name = db.query(exercise).filter_by(id=exercise.exercise_id).first().name
+            exercises.append({"id": exercise.exercise_id, "name": exercise_name, "repetitions": exercise.repetitions, "sets": exercise.sets})
+        result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "exercises": exercises})
     return result
 
 @app.get("/get_workout_plans")

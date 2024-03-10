@@ -12,32 +12,32 @@ class User(Base):
     goals = relationship("Goal", back_populates="user")
     weights = relationship("WeightTracker", back_populates="user")
 
-class Excercise(Base):
-    __tablename__ = "excercise"
+class Exercise(Base):
+    __tablename__ = "exercise"
     id: int = Column(Integer, primary_key=True, index=True)
     name: str = Column(String)
     description: str = Column(String)
     instructions: str = Column(String)
 
-    excercise_muscles = relationship("ExcerciseMuscle", back_populates="excercise")
-    excercise_workout = relationship("ExcerciseWorkout", back_populates="excercise")
-    goals = relationship("Goal", back_populates="excercise")
+    exercise_muscles = relationship("exerciseMuscle", back_populates="exercise")
+    exercise_workout = relationship("exerciseWorkout", back_populates="exercise")
+    goals = relationship("Goal", back_populates="exercise")
     
-class ExcerciseMuscle(Base):
-    __tablename__ = "excercise_muscle"
+class ExerciseMuscle(Base):
+    __tablename__ = "exercise_muscle"
     id: int = Column(Integer, primary_key=True, index=True)
-    excercise_id: int = Column(Integer, ForeignKey("excercise.id"))
+    exercise_id: int = Column(Integer, ForeignKey("exercise.id"))
     muscle_id: int = Column(Integer, ForeignKey("muscle.id"))
 
-    excercise = relationship("Excercise", back_populates="excercise_muscles")
-    muscle = relationship("Muscle", back_populates="excercise_muscles")
+    exercise = relationship("exercise", back_populates="exercise_muscles")
+    muscle = relationship("Muscle", back_populates="exercise_muscles")
 
 class Muscle(Base):
     __tablename__ = "muscle"
     id: int = Column(Integer, primary_key=True, index=True)
     name: str = Column(String)
 
-    excercise_muscles = relationship("ExcerciseMuscle", back_populates="muscle")
+    exercise_muscles = relationship("exerciseMuscle", back_populates="muscle")
 
 class WorkoutPlan(Base):
     __tablename__ = "workout_plan"
@@ -48,33 +48,33 @@ class WorkoutPlan(Base):
     duration: float = Column(Float)
     goals: str = Column(String)
 
-    excercises = relationship("ExcerciseWorkout", back_populates="workout")
+    exercises = relationship("exerciseWorkout", back_populates="workout")
 
-class ExcerciseWorkout(Base):
-    __tablename__ = "excercise_workout"
+class ExerciseWorkout(Base):
+    __tablename__ = "exercise_workout"
     id: int = Column(Integer, primary_key=True, index=True)
-    excercise_id: int = Column(Integer, ForeignKey("excercise.id"))
+    exercise_id: int = Column(Integer, ForeignKey("exercise.id"))
     workout_id: int = Column(Integer, ForeignKey("workout_plan.id"))
     repetitions: int = Column(Integer)
     sets: int = Column(Integer)
     order: int = Column(Integer)
     break_time: float = Column(Integer)
 
-    excercise = relationship("Excercise", back_populates="excercise_workout")
-    workout = relationship("WorkoutPlan", back_populates="excercises")
+    exercise = relationship("exercise", back_populates="exercise_workout")
+    workout = relationship("WorkoutPlan", back_populates="exercises")
 
 class Goal(Base):
     __tablename__ = "goal"
     id: int = Column(Integer, primary_key=True, index=True)
     user_id: int = Column(Integer, ForeignKey("user.id"))
-    excercise_id: int = Column(Integer, ForeignKey("excercise.id"))
+    exercise_id: int = Column(Integer, ForeignKey("exercise.id"))
     achieved: Boolean = Column(Boolean)
     weight: Optional[float] = Column(Integer)
     sets: int = Column(Integer)
     repetitions: int = Column(Integer)
     date: Date = Column(Date)
     user = relationship("User", back_populates="goals")
-    excercise = relationship("Excercise", back_populates="goals")
+    exercise = relationship("exercise", back_populates="goals")
 
 class WeightTracker(Base):
     __tablename__ = "weight_tracker"
