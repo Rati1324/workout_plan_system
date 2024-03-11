@@ -61,7 +61,7 @@ async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestF
 
 @app.post("/get_exercises")
 async def get_exercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    exercises = db.query(exercise).all()
+    exercises = db.query(Exercise).all()
 
     result = []
     for exercise in exercises:
@@ -87,7 +87,7 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
 
     for exercise in workout_plan.exercises:
         print(exercise.repetitions)
-        db_exercise_workout = exerciseWorkout(
+        db_exercise_workout = ExerciseWorkout(
             exercise_id = exercise.id,
             workout_id = plan_id,
             repetitions = exercise.repetitions,
@@ -134,17 +134,21 @@ async def track_weight(dependencies = Depends(get_current_user), db: Session = D
 async def get():
     return {"result": "result"}
 
-@app.get("/get_workout_plans")
-async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    user_id = dependencies.id
+def get_workout_plans_db(db: Session, user_id: int):
     workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
     result = []
     for plan in workout_plans:
         exercises = []
         for exercise in plan.exercises:
-            exercise_name = db.query(exercise).filter_by(id=exercise.exercise_id).first().name
+            exercise_name = db.query(Exercise).filter_by(id=exercise.exercise_id).first().name
             exercises.append({"id": exercise.exercise_id, "name": exercise_name, "repetitions": exercise.repetitions, "sets": exercise.sets})
         result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "exercises": exercises})
+    return result
+
+@app.get("/get_workout_plans")
+async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = dependencies.id
+    workout_plans = get_workout_plans_db(db, user_id)
     return workout_plans
 
 r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
@@ -152,21 +156,23 @@ r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
 @app.websocket("/workout_session")
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
+    db = SessionLocal()
+    user = None
     try:
-        user = get_current_user(db=SessionLocal(), token=token)
+        user = get_current_user(db, token=token)
     except HTTPException:
         await websocket.send_text("Invalid token")
         await websocket.close()
         return None
 
-    # await websocket.send_text(user)
-
+    await websocket.send_text("Connected successfully")
+    user_workout_plans = get_workout_plans_db(db, user.id)
     # while 1:
     #     data = await websocket.receive_text()
-        # json_data = json.loads(data)
+    #     json_data = json.loads(data)
 
-        # if json_data["action"] == "store":
-        #     r.set("value", json_data["value"])
-        # elif json_data["action"] == "retrieve":
-        #     value = r.get(json_data["key"])
-        #     await websocket.send_text(f"value from redis: {value}")
+    #     if json_data["action"] == "store":
+    #         r.set("value", json_data["value"])
+    #     elif json_data["action"] == "retrieve":
+    #         value = r.get(json_data["key"])
+    #         await websocket.send_text(f"value from redis: {value}")
