@@ -177,12 +177,47 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
     await websocket.send_text("Connected successfully")
     user_workout_plans = get_workout_plans_db(db, user.id)
-    # while 1:
-    #     data = await websocket.receive_text()
-    #     json_data = json.loads(data)
+    while 1:
+        request = await websocket.receive_text()
+        json_request = json.loads(request)
+        action = json_request["action"]
 
-    #     if json_data["action"] == "store":
-    #         r.set("value", json_data["value"])
-    #     elif json_data["action"] == "retrieve":
-    #         value = r.get(json_data["key"])
-    #         await websocket.send_text(f"value from redis: {value}")
+        cur_plan = [plan for plan in user_workout_plans if plan["id"] == json_request["plan_id"]][0]
+        if action == "start_session":
+            plan_id = json_request["plan_id"]
+            cur_exercise = cur_plan["exercises"][0]
+            total_exercises = len(cur_plan["exercises"])
+
+            r.set("plan_id", plan_id)
+            r.set("cur_exercise_num", 1)
+            r.set("cur_exercise_name", cur_exercise["name"])
+            r.set("total_exercises", total_exercises)
+
+            r.set("cur_set", 1)
+            r.set("total_sets", cur_exercise["sets"])
+            r.set("status", "started")
+
+        if action == "finish_set":
+            cur_set = r.get("cur_set")
+            total_sets = r.get("total_sets")
+
+            if cur_set == total_sets:
+                if r.get("exercise_num") == r.get("total_exercises"):
+                    r.set("status", "Session finished")
+                else:
+                    r.set("cur_set", 1)
+                    r.set("cur_exercise_num", int(r.get("cur_exercise_num")) + 1)
+                    r.set("status", "Exercise finished")
+            else:
+                r.set("cur_set", cur_set + 1)
+                r.set("status", "Set finished")
+
+        cur_state = {"cur_status": r.get("status")}
+        await websocket.send_text(str(cur_state))
+        # json_data = json.loads(data)
+
+        # if json_data["action"] == "store":
+        #     r.set("value", json_data["value"])
+        # elif json_data["action"] == "retrieve":
+        #     value = r.get(json_data["key"])
+        #     await websocket.send_text(f"value from redis: {value}")
