@@ -12,6 +12,7 @@ from seed_db import seed, clear
 from datetime import datetime
 from starlette.templating import Jinja2Templates
 import redis
+from urllib.parse import parse_qs
 
 templates = Jinja2Templates(directory="templates")
 
@@ -133,7 +134,9 @@ async def track_weight(dependencies = Depends(get_current_user), db: Session = D
 async def get():
     return {"result": "result"}
 
-def get_workout_plans_db(user_id: int, db: Session):
+@app.get("/get_workout_plans")
+async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = dependencies.id
     workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
     result = []
     for plan in workout_plans:
@@ -142,38 +145,28 @@ def get_workout_plans_db(user_id: int, db: Session):
             exercise_name = db.query(exercise).filter_by(id=exercise.exercise_id).first().name
             exercises.append({"id": exercise.exercise_id, "name": exercise_name, "repetitions": exercise.repetitions, "sets": exercise.sets})
         result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "exercises": exercises})
-    return result
-
-@app.get("/get_workout_plans")
-async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    # print(dependencies.id, "here")
-    user_id = dependencies.id
-    print(dependencies.id)
-    workout_plans = get_workout_plans_db(user_id, db)
     return workout_plans
-
-
-@app.get("/workout_template")
-def temp(request: Request):
-    # user = get_current_user(token=token)
-    return templates.TemplateResponse("workout.html", {"request": request})
 
 r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
 
 @app.websocket("/workout_session")
-# async def websocket_endpoint(websocket: WebSocket, token: str):
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
-    # user = get_current_user(db=SessionLocal(), token=token)
-    # workout_plans = get_workout_plans_db(user_id=user.id, db=SessionLocal())
-    # json_workout_plans = json.dumps(workout_plans)
-    # await websocket.send_text(json_workout_plans)
-    # await websocket.send_text("connected")
-    while True:
-        data = await websocket.receive_text()
-        if data == "store":
-            r.set("key", "value")
-            await websocket.send_text(f"stored in redis")
-        elif data == "retrieve":
-            value = r.get("key")
-            await websocket.send_text(f"value from redis: {value}")
+    try:
+        user = get_current_user(db=SessionLocal(), token=token)
+    except HTTPException:
+        await websocket.send_text("Invalid token")
+        await websocket.close()
+        return None
+
+    # await websocket.send_text(user)
+
+    # while 1:
+    #     data = await websocket.receive_text()
+        # json_data = json.loads(data)
+
+        # if json_data["action"] == "store":
+        #     r.set("value", json_data["value"])
+        # elif json_data["action"] == "retrieve":
+        #     value = r.get(json_data["key"])
+        #     await websocket.send_text(f"value from redis: {value}")

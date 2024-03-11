@@ -19,8 +19,8 @@ class Exercise(Base):
     description: str = Column(String)
     instructions: str = Column(String)
 
-    exercise_muscles = relationship("exerciseMuscle", back_populates="exercise")
-    exercise_workout = relationship("exerciseWorkout", back_populates="exercise")
+    exercise_muscles = relationship("ExerciseMuscle", back_populates="exercise")
+    exercise_workout = relationship("ExerciseWorkout", back_populates="exercise")
     goals = relationship("Goal", back_populates="exercise")
     
 class ExerciseMuscle(Base):
@@ -29,7 +29,7 @@ class ExerciseMuscle(Base):
     exercise_id: int = Column(Integer, ForeignKey("exercise.id"))
     muscle_id: int = Column(Integer, ForeignKey("muscle.id"))
 
-    exercise = relationship("exercise", back_populates="exercise_muscles")
+    exercise = relationship("Exercise", back_populates="exercise_muscles")
     muscle = relationship("Muscle", back_populates="exercise_muscles")
 
 class Muscle(Base):
@@ -37,7 +37,7 @@ class Muscle(Base):
     id: int = Column(Integer, primary_key=True, index=True)
     name: str = Column(String)
 
-    exercise_muscles = relationship("exerciseMuscle", back_populates="muscle")
+    exercise_muscles = relationship("ExerciseMuscle", back_populates="muscle")
 
 class WorkoutPlan(Base):
     __tablename__ = "workout_plan"
@@ -48,7 +48,7 @@ class WorkoutPlan(Base):
     duration: float = Column(Float)
     goals: str = Column(String)
 
-    exercises = relationship("exerciseWorkout", back_populates="workout")
+    exercises = relationship("ExerciseWorkout", back_populates="workout")
 
 class ExerciseWorkout(Base):
     __tablename__ = "exercise_workout"
@@ -60,7 +60,7 @@ class ExerciseWorkout(Base):
     order: int = Column(Integer)
     break_time: float = Column(Integer)
 
-    exercise = relationship("exercise", back_populates="exercise_workout")
+    exercise = relationship("Exercise", back_populates="exercise_workout")
     workout = relationship("WorkoutPlan", back_populates="exercises")
 
 class Goal(Base):
@@ -74,7 +74,7 @@ class Goal(Base):
     repetitions: int = Column(Integer)
     date: Date = Column(Date)
     user = relationship("User", back_populates="goals")
-    exercise = relationship("exercise", back_populates="goals")
+    exercise = relationship("Exercise", back_populates="goals")
 
 class WeightTracker(Base):
     __tablename__ = "weight_tracker"
