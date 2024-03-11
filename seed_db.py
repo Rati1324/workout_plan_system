@@ -5,6 +5,7 @@ from core.utils import get_db
 from core.config import SessionLocal
 
 def seed():
+    # print("seedin")
     db = SessionLocal()
     excercice_muscle = {"Push-ups": ["Triceps", "Deltoids", "Pectorals", "Rectus Abdominis", "Obliques"], "Sit-ups": ["Rectus Abdominis", "Obliques"], "Squats": ["Gluteus Maximus", "Quadriceps", "Hamstrings", "Calves"], "Lunges": ["Gluteus Maximus", "Quadriceps", "Hamstrings", "Calves"], "Pull-ups": ["Latissimus Dorsi", "Biceps", "Trapezius", "Rhomboids"], "Bench Press": ["Pectorals", "Triceps", "Deltoids"], "Deadlift": ["Gluteus Maximus", "Quadriceps", "Hamstrings", "Erector Spinae"], "Overhead Press": ["Deltoids", "Triceps"], "Barbell Row": ["Latissimus Dorsi", "Biceps", "Trapezius", "Rhomboids"], "Upright Row": ["Deltoids", "Triceps", "Trapezius", "Rhomboids"], "Dips": ["Triceps", "Pectorals", "Deltoids"], "Bicep Curls": ["Biceps"], "Tricep Extensions": ["Triceps"], "Leg Press": ["Gluteus Maximus", "Quadriceps", "Hamstrings", "Calves"], "Calf Raises": ["Calves"], "Shoulder Press": ["Deltoids", "Triceps"], "Lat Pulldowns": ["Latissimus Dorsi", "Biceps", "Trapezius", "Rhomboids"], "Bent Over Rows": ["Latissimus Dorsi", "Biceps", "Trapezius", "Rhomboids"], "Pec Deck Fly": ["Pectorals"], "Lateral Raise": ["Deltoids"]}
 
@@ -42,14 +43,16 @@ def clear():
 #       "repetitions": 3,
 #       "sets": 1,
 #       "order": 1,
-#       "break_time": 60
+#       "break_between_sets": 60,
+#       "break_after_exercise": 60
 #     },
 #     {
 #       "id": 2,
 #       "repetitions": 2,
 #       "sets": 2,
 #       "order": 2,
-#       "break_time": 60
+#       "break_between_sets": 60,
+#       "break_after_exercise": 60
 #     }
 #   ]
 # }

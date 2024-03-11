@@ -1,7 +1,6 @@
 import json, time, asyncio
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, Request
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import database_exists, create_database
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user, oauth2_scheme
@@ -11,11 +10,9 @@ from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTracke
 import re
 from seed_db import seed, clear
 from datetime import datetime
-from starlette.templating import Jinja2Templates
 import redis
 from urllib.parse import parse_qs
 
-templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
@@ -96,12 +93,14 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
     plan_id = db_workout_plan.id
 
     for exercise in workout_plan.exercises:
-        print(exercise.repetitions)
         db_exercise_workout = ExerciseWorkout(
             exercise_id = exercise.id,
             workout_id = plan_id,
             repetitions = exercise.repetitions,
             sets = exercise.sets,
+            break_between_sets = exercise.break_between_sets,
+            break_after_exercise = exercise.break_after_exercise,
+            order = exercise.order,
         )
         db_workout_plan.exercises.append(db_exercise_workout)
         db.add(db_exercise_workout)
@@ -150,8 +149,14 @@ def get_workout_plans_db(db: Session, user_id: int):
     for plan in workout_plans:
         exercises = []
         for exercise in plan.exercises:
-            exercise_name = db.query(Exercise).filter_by(id=exercise.exercise_id).first().name
-            exercises.append({"id": exercise.exercise_id, "name": exercise_name, "repetitions": exercise.repetitions, "sets": exercise.sets})
+            # exercise_name = db.query(Exercise).filter_by(id=exercise.exercise_id).first().name
+            exercise_name = exercise.exercise.name
+            break_between_sets = exercise.break_between_sets
+            break_after_exercise = exercise.break_after_exercise
+
+            exercises.append({"id": exercise.exercise_id, "name": exercise_name,
+                               "repetitions": exercise.repetitions, "sets": exercise.sets,
+                               "break_between_sets": break_between_sets, "break_after_exercise": break_after_exercise})
         result.append({"id": plan.id, "name": plan.name, "frequency": plan.frequency, "duration": plan.duration, "goals": plan.goals, "exercises": exercises})
     return result
 
@@ -177,12 +182,15 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
     await websocket.send_text("Connected successfully")
     user_workout_plans = get_workout_plans_db(db, user.id)
+
     while 1:
         request = await websocket.receive_text()
+        await websocket.send_text(json.dumps(user_workout_plans))
         json_request = json.loads(request)
         action = json_request["action"]
 
-        cur_plan = [plan for plan in user_workout_plans if plan["id"] == json_request["plan_id"]][0]
+        if "plan_id" in json_request:
+            cur_plan = [plan for plan in user_workout_plans if plan["id"] == json_request["plan_id"]][0]
         if action == "start_session":
             plan_id = json_request["plan_id"]
             cur_exercise = cur_plan["exercises"][0]
@@ -192,6 +200,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             r.set("cur_exercise_num", 1)
             r.set("cur_exercise_name", cur_exercise["name"])
             r.set("total_exercises", total_exercises)
+            r.set("break_between_sets", cur_exercise["break_between_sets"])
+            r.set("break_after_exercise", cur_exercise["break_after_exercise"])
 
             r.set("cur_set", 1)
             r.set("total_sets", cur_exercise["sets"])
@@ -205,14 +215,14 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 if r.get("exercise_num") == r.get("total_exercises"):
                     r.set("status", "Session finished")
                 else:
-                    r.set("cur_set", 1)
                     r.set("cur_exercise_num", int(r.get("cur_exercise_num")) + 1)
-                    r.set("status", "Exercise finished")
+                    r.set("cur_set", 1)
+                    r.set("break_between_sets", r.get("break_between_sets") + " seconds")
             else:
                 r.set("cur_set", cur_set + 1)
                 r.set("status", "Set finished")
 
-        cur_state = {"cur_status": r.get("status")}
+        cur_state = {"status": r.get("status")}
         await websocket.send_text(str(cur_state))
         # json_data = json.loads(data)
 
