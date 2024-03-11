@@ -1,8 +1,8 @@
-"""add break between exercise column
+"""remove user_id from exercise
 
-Revision ID: 88cac1d8b16e
+Revision ID: ff6f83aae3b8
 Revises: 38743abd0166
-Create Date: 2024-03-11 08:00:00.096655
+Create Date: 2024-03-11 10:20:05.974866
 
 """
 from typing import Sequence, Union
@@ -12,14 +12,16 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '88cac1d8b16e'
+revision: str = 'ff6f83aae3b8'
 down_revision: Union[str, None] = '38743abd0166'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    pass
+    # remove user_Id column an drelation from exercise
+    op.drop_column('exercise', 'user_id')
+    # op.drop_constraint('fk_exercise_user_id', 'exercise', type_='foreignkey')    
 
 
 def downgrade() -> None:

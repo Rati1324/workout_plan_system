@@ -22,7 +22,7 @@ class Exercise(Base):
     exercise_muscles = relationship("ExerciseMuscle", back_populates="exercise")
     exercise_workout = relationship("ExerciseWorkout", back_populates="exercise")
     goals = relationship("Goal", back_populates="exercise")
-    
+ 
 class ExerciseMuscle(Base):
     __tablename__ = "exercise_muscle"
     id: int = Column(Integer, primary_key=True, index=True)

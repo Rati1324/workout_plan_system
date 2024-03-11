@@ -23,7 +23,7 @@ if not database_exists(engine.url):
     create_database(engine.url)
     print("Database created.")
 
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 # seed()
 # clear()
 
@@ -31,6 +31,11 @@ Base.metadata.create_all(bind=engine)
 async def register(user_data: UserSchema, db: Session = Depends(get_db)):
     password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
 
+    # check if username is taken
+    check_user = db.query(User).filter_by(username=user_data.username).first()    
+    if check_user is not None:
+        raise HTTPException(status_code=400, detail="Username already taken")
+    
     if not re.match(password_regex, user_data.password):
         raise HTTPException(status_code=400, detail="Password must contain at least one lowercase letter, one uppercase letter, one digit, and be at least 8 characters long")
 

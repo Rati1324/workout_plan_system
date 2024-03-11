@@ -25,4 +25,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_column('excercise_workout', 'break_between_sets')
     op.drop_column('excercise_workout', 'break_after_exercise')
-    
+
