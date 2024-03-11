@@ -3,9 +3,10 @@ from fastapi import FastAPI, Depends, HTTPException, WebSocket, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
+from sqlalchemy_utils import database_exists, create_database
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user, oauth2_scheme
 from core.models import User, Exercise, WorkoutPlan, ExerciseWorkout, Goal, WeightTracker
-from core.config import SessionLocal
+from core.config import SessionLocal, engine, Base
 from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTrackerSchema
 import re
 from seed_db import seed, clear
@@ -17,8 +18,12 @@ from urllib.parse import parse_qs
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
-# Base.metadata.create_all(bind=engine)
 
+if not database_exists(engine.url):
+    create_database(engine.url)
+    print("Database created.")
+
+Base.metadata.create_all(bind=engine)
 # seed()
 # clear()
 

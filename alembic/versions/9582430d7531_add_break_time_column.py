@@ -19,8 +19,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column('excercise_workout', sa.Column('break_time', sa.Float))
-
+    op.add_column('excercise_workout', sa.Column('break_between_sets', sa.Integer))
+    op.add_column('excercise_workout', sa.Column('break_after_exercise', sa.Integer))
 
 def downgrade() -> None:
-    op.drop_column('excercise_workout', 'break_time')
+    op.drop_column('excercise_workout', 'break_between_sets')
+    op.drop_column('excercise_workout', 'break_after_exercise')
+    

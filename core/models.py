@@ -58,8 +58,8 @@ class ExerciseWorkout(Base):
     repetitions: int = Column(Integer)
     sets: int = Column(Integer)
     order: int = Column(Integer)
-    break_time: float = Column(Integer)
-
+    break_between_sets: int = Column(Integer)
+    break_after_exercise: int = Column(Integer)
     exercise = relationship("Exercise", back_populates="exercise_workout")
     workout = relationship("WorkoutPlan", back_populates="exercises")
 
