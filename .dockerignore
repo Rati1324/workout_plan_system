@@ -1,5 +1,4 @@
-__pycache__/
-core/__pycache__/
+**/__pycache__/
 *.env
 *.env.*
 env.*
