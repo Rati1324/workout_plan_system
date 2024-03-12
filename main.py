@@ -204,7 +204,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         r.set("total_sets", exercises[cur_exercise_index]["sets"])
         r.set("status", "break_after_exercise")
 
-    while 1:
+    r.set("status", "init")
+    cur_status = r.get("status")
+    while cur_status != "session ended":
         request = await websocket.receive_text()
 
         json_request = json.loads(request)
@@ -214,7 +216,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             cur_plan = [plan for plan in user_workout_plans if plan["id"] == json_request["plan_id"]][0]
 
         if action == "start_session":
-            plan_id = json_request["plan_id"]
             cur_exercise = cur_plan["exercises"][0]
             total_exercises = len(cur_plan["exercises"])
 
@@ -228,6 +229,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             r.set("break_between_sets", cur_exercise["break_between_sets"])
             r.set("status", "started")
 
+            cur_exercise = cur_plan["exercises"][int(r.get("cur_exercise_index"))]
+            await websocket.send_text(json.dumps({"status": "session_started", "cur_exercise": cur_exercise}))
+
         elif action == "finish_set":
             cur_set = r.get("cur_set")
             total_sets = r.get("total_sets")
@@ -237,21 +241,23 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
             if cur_set == total_sets:
                 if (cur_exercise_index + 1) == total_exercises:
-                    r.set("status", "session ended")
+                    await websocket.send_text(json.dumps({"status": "session_ended"}))
+                    await websocket.close(code=1000, reason="session_ended")
                 else:
                     finish_exercise(cur_plan["exercises"])
             else:
                 finish_set()
 
-        # await websocket.send_text(json.dumps(r.get("status")))
-        if action != "start_session":
             status = r.get("status")
-            break_seconds = r.get("break")
-            await websocket.send_text(json.dumps({"status": status, "break_seconds": break_seconds}))
+            await websocket.send_text(json.dumps({"status": status}))
 
             await asyncio.sleep(int(r.get("break")))
 
             await websocket.send_text(json.dumps({"status": "started", "cur_exercise_name": r.get("cur_exercise_name"), "cur_set": r.get("cur_set"), "total_sets": r.get("total_sets")}))
-        else:
-            cur_exercise = cur_plan["exercises"][r.get("cur_exercise_index")]
-            await websocket.send_text(json.dumps({"status": "session_started", "cur_exercise": cur_exercise}))
+
+        if r.get("status") == "session_ended":
+            break
+        # await websocket.send_text(json.dumps(r.get("status")))
+            
+
+
