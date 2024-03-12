@@ -13,7 +13,6 @@ from datetime import datetime
 import redis
 from urllib.parse import parse_qs
 
-
 app = FastAPI()
 
 if not database_exists(engine.url):

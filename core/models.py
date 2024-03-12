@@ -44,7 +44,7 @@ class WorkoutPlan(Base):
     id: int = Column(Integer, primary_key=True, index=True)
     user_id: int = Column(Integer, ForeignKey("user.id"))
     name: str = Column(String)
-    frequency: int = Column(Integer)
+    weekdays: str = Column(String)
     duration: float = Column(Float)
     goals: str = Column(String)
 
