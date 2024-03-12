@@ -168,6 +168,13 @@ async def get_workout_plans(dependencies = Depends(get_current_user), db: Sessio
 
 r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
 
+def get_state():
+    state = {}
+    for keys in r.keys('*'):
+        state[keys] = r.get(keys)
+    return state
+
+# r.flushall()
 @app.websocket("/workout_session")
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
@@ -183,14 +190,27 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.send_text("Connected successfully")
     user_workout_plans = get_workout_plans_db(db, user.id)
 
+    def finish_set():
+        r.set("break", r.get("break_between_exercises"))
+        r.set("cur_set", cur_set + 1)
+        r.set("status", "break")
+
+    def finish_exercise():
+        r.set("break", r.get("break_between_sets"))
+        r.set("cur_exercise_num", int(r.get("cur_exercise_num")) + 1)
+        r.set("cur_set", 1)
+        r.set("status", "break")
+
+    # clean redit
     while 1:
         request = await websocket.receive_text()
-        await websocket.send_text(json.dumps(user_workout_plans))
+
         json_request = json.loads(request)
         action = json_request["action"]
 
         if "plan_id" in json_request:
             cur_plan = [plan for plan in user_workout_plans if plan["id"] == json_request["plan_id"]][0]
+
         if action == "start_session":
             plan_id = json_request["plan_id"]
             cur_exercise = cur_plan["exercises"][0]
@@ -211,19 +231,24 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             cur_set = r.get("cur_set")
             total_sets = r.get("total_sets")
 
-            if cur_set == total_sets:
-                if r.get("exercise_num") == r.get("total_exercises"):
-                    r.set("status", "Session finished")
-                else:
-                    r.set("cur_exercise_num", int(r.get("cur_exercise_num")) + 1)
-                    r.set("cur_set", 1)
-                    r.set("break_between_sets", r.get("break_between_sets") + " seconds")
-            else:
-                r.set("cur_set", cur_set + 1)
-                r.set("status", "Set finished")
+            cur_exercise_num = r.get("cur_exercise_num")
+            total_exercises = r.get("total_exercises")
 
-        cur_state = {"status": r.get("status")}
-        await websocket.send_text(str(cur_state))
+            if cur_set == total_sets:
+                if cur_exercise_num == total_exercises:
+                    r.set("status", "session ended")
+                else:
+                    finish_exercise()
+            else:
+                finish_set()
+
+        state = get_state()
+        # await websocket.send_text(json.dumps(state))
+        if (r.get("status") == "break"):
+            await websocket.send_text("resting.........")
+            await asyncio.sleep(int(r.get("break")))
+            await websocket.send_text("started")
+        # await websocket.send_text(str(cur_state))
         # json_data = json.loads(data)
 
         # if json_data["action"] == "store":
