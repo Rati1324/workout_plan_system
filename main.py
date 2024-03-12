@@ -28,7 +28,6 @@ if not database_exists(engine.url):
 async def register(user_data: UserSchema, db: Session = Depends(get_db)):
     password_regex = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
 
-    # check if username is taken
     check_user = db.query(User).filter_by(username=user_data.username).first()    
     if check_user is not None:
         raise HTTPException(status_code=400, detail="Username already taken")
@@ -54,7 +53,6 @@ async def register(user_data: UserSchema, db: Session = Depends(get_db)):
 
 @app.post("/login")
 async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestForm = Depends()):
-    print(user_data)
     user = db.query(User).filter_by(username=user_data.username).first()
     if user is None:
         raise HTTPException(status_code=400, detail="User not found")
@@ -173,11 +171,7 @@ async def get_workout_plans(dependencies = Depends(get_current_user), db: Sessio
 
 r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
 
-def get_state():
-    state = {}
-    for keys in r.keys('*'):
-        state[keys] = r.get(keys)
-    return state
+
 
 # r.flushall()
 @app.websocket("/workout_session")
@@ -196,17 +190,20 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     user_workout_plans = get_workout_plans_db(db, user.id)
 
     def finish_set():
-        r.set("break", r.get("break_between_exercises"))
-        r.set("cur_set", cur_set + 1)
-        r.set("status", "break")
-
-    def finish_exercise():
+        cur_set = int(r.get("cur_set"))
         r.set("break", r.get("break_between_sets"))
-        r.set("cur_exercise_num", int(r.get("cur_exercise_num")) + 1)
-        r.set("cur_set", 1)
-        r.set("status", "break")
+        r.set("cur_set", cur_set + 1)
+        r.set("status", "break_after_set")
 
-    # clean redit
+    def finish_exercise(exercises):
+        cur_exercise_index = int(r.get("cur_exercise_index")) + 1
+        r.set("break", r.get("break_after_exercise"))
+        r.set("cur_exercise_index", cur_exercise_index)
+        r.set("cur_exercise_name", exercises[cur_exercise_index]["name"])
+        r.set("cur_set", 1)
+        r.set("total_sets", exercises[cur_exercise_index]["sets"])
+        r.set("status", "break_after_exercise")
+
     while 1:
         request = await websocket.receive_text()
 
@@ -221,43 +218,40 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             cur_exercise = cur_plan["exercises"][0]
             total_exercises = len(cur_plan["exercises"])
 
-            r.set("plan_id", plan_id)
-            r.set("cur_exercise_num", 1)
-            r.set("cur_exercise_name", cur_exercise["name"])
             r.set("total_exercises", total_exercises)
-            r.set("break_between_sets", cur_exercise["break_between_sets"])
+            r.set("cur_exercise_index", 0)
+            r.set("cur_exercise_name", cur_exercise["name"])
             r.set("break_after_exercise", cur_exercise["break_after_exercise"])
 
             r.set("cur_set", 1)
             r.set("total_sets", cur_exercise["sets"])
+            r.set("break_between_sets", cur_exercise["break_between_sets"])
             r.set("status", "started")
 
-        if action == "finish_set":
+        elif action == "finish_set":
             cur_set = r.get("cur_set")
             total_sets = r.get("total_sets")
 
-            cur_exercise_num = r.get("cur_exercise_num")
-            total_exercises = r.get("total_exercises")
+            cur_exercise_index = int(r.get("cur_exercise_index"))
+            total_exercises = int(r.get("total_exercises"))
 
             if cur_set == total_sets:
-                if cur_exercise_num == total_exercises:
+                if (cur_exercise_index + 1) == total_exercises:
                     r.set("status", "session ended")
                 else:
-                    finish_exercise()
+                    finish_exercise(cur_plan["exercises"])
             else:
                 finish_set()
 
-        state = get_state()
-        # await websocket.send_text(json.dumps(state))
-        if (r.get("status") == "break"):
-            await websocket.send_text("resting.........")
-            await asyncio.sleep(int(r.get("break")))
-            await websocket.send_text("started")
-        # await websocket.send_text(str(cur_state))
-        # json_data = json.loads(data)
+        # await websocket.send_text(json.dumps(r.get("status")))
+        if action != "start_session":
+            status = r.get("status")
+            break_seconds = r.get("break")
+            await websocket.send_text(json.dumps({"status": status, "break_seconds": break_seconds}))
 
-        # if json_data["action"] == "store":
-        #     r.set("value", json_data["value"])
-        # elif json_data["action"] == "retrieve":
-        #     value = r.get(json_data["key"])
-        #     await websocket.send_text(f"value from redis: {value}")
+            await asyncio.sleep(int(r.get("break")))
+
+            await websocket.send_text(json.dumps({"status": "started", "cur_exercise_name": r.get("cur_exercise_name"), "cur_set": r.get("cur_set"), "total_sets": r.get("total_sets")}))
+        else:
+            cur_exercise = cur_plan["exercises"][r.get("cur_exercise_index")]
+            await websocket.send_text(json.dumps({"status": "session_started", "cur_exercise": cur_exercise}))
