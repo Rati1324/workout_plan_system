@@ -92,7 +92,12 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
 
     plan_id = db_workout_plan.id
 
+    last_order_num = 0
     for exercise in workout_plan.exercises:
+        if exercise.order != last_order_num + 1:
+            raise HTTPException(status_code=400, detail="Order of exercises is not correct")
+        last_order_num = exercise.order
+
         db_exercise_workout = ExerciseWorkout(
             exercise_id = exercise.id,
             workout_id = plan_id,
