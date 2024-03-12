@@ -1,12 +1,32 @@
 version: '3'
 
 services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: "exit 0"
+      # test: ["CMD-SHELL", "pg_isready"]
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: workout_db
+
   backend:
     build: .
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "uvicorn main:app --reload --port=8000 --host=0.0.0.0"
+      redis_service:
+        condition: service_started
+    # command: sh -c "uvicorn main:app --reload --port=8000 --host=0.0.0.0"
+    command: ["bash", "-c", "alembic upgrade head && uvicorn main:app --reload --host 0.0.0.0 --port 8000"]
+
     ports:
       - 8000:8000
     volumes:
@@ -25,18 +45,10 @@ services:
     depends_on:
       - db
  
-  db:
-    image: postgres:13
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    expose:
-      - 5432
-    healthcheck:
-      test: "exit 0"
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: workout_db
+  redis_service:
+    image: "redis"
+    ports:
+      - "6379:6379"
 
 volumes:
   postgres_data:

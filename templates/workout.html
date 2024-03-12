@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Chat</title>
+    </head>
+    <body>
+        <h1>WebSocket Chat</h1>
+        <input type="text" id="token"/>
+        <button onClick="auth(event)">Send</button>
+        <button onClick="sendData(event)">Send Data</button>
+        
+        <div id="sessions">
+        </div>  
+
+        <script>
+            function auth(event) {
+                var input = document.getElementById("token")
+                ws = new WebSocket(`ws://localhost:8000/workout_session?token=${input.value}`);
+                
+                ws.onopen = function(event) {
+                    var jsonData = {
+                        token: input.value
+                    };
+                    ws.send(JSON.stringify(jsonData))
+                }
+
+                ws.onmessage = function(res) {
+                    // var data = JSON.parse(res.data)
+                    console.log(res.data)
+                    // var sessions = document.getElementById('sessions')
+                    // for (let session of data) {
+                    //     var sessionElem = document.createElement('h2')
+                    //     var content = document.createTextNode(session.name)
+                    //     sessionElem.appendChild(content)
+                    //     sessions.appendChild(sessionElem)
+                    //     var exercises = document.createElement('ul')
+                    //     for (let exercise of session.excercises) {
+                    //         var exerciseElem = document.createElement('li')
+                    //         var content = document.createTextNode(exercise.name)
+                    //         exerciseElem.appendChild(content)
+                    //         exercises.appendChild(exerciseElem)
+                    //     }
+                    //     console.log(exercises)
+                    //     sessions.appendChild(exercises)
+                    // }
+                };
+                input.value = ''
+                event.preventDefault()
+            }
+
+        </script>
+    </body>
+</html>
