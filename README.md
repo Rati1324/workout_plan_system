@@ -23,14 +23,15 @@ Make sure you have the following software installed on your system:
    docker-compose up --build
    ```
    This command will build the Docker images and start the containers defined in docker-compose.yml.
+3. Access the FastAPI application in your browser: http://localhost:8000/
 
-3. Access the FastAPI application in your browser:
+5. Access the API documentation:
 
-        API documentation (Swagger): http://localhost:8000/docs
+    API documentation (Swagger): http://localhost:8000/docs
 
-        Interactive ReDoc documentation: http://localhost:8000/redoc
+    Interactive ReDoc documentation: http://localhost:8000/redoc
     
-        Real-time workout session tracker documentation: http://localhost:8000/websocket_docs 
+    Real-time workout session tracker documentation: http://localhost:8000/websocket_docs 
 
 You can now interact with and test your FastAPI application using the provided documentation.
 
