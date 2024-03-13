@@ -53,21 +53,25 @@ async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestF
     token = create_jwt_token(user_data.username)
     return {"access_token": token, "token_type": "bearer"}
 
-def get_workout_plans_db(db: Session, user_id: int):
+async def get_workout_plans_db(db: Session, user_id: int):
     workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
     result = []
+
+    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     for plan in workout_plans:
         exercises = []
 
         plan.exercises.sort(key=lambda x: x.order)
+        plan_days = plan.weekdays
+        days = [weekdays[i] for i in range(len(plan_days)) if plan_days[i] == "1"]
         for exercise in plan.exercises:
-            # exercise_name = db.query(Exercise).filter_by(id=exercise.exercise_id).first().name
             exercise_name = exercise.exercise.name
             break_between_sets = exercise.break_between_sets
             break_after_exercise = exercise.break_after_exercise
 
             exercises.append({"id": exercise.exercise_id, "name": exercise_name,
                                "repetitions": exercise.repetitions, "sets": exercise.sets,
-                               "break_between_sets": break_between_sets, "break_after_exercise": break_after_exercise})
+                               "break_between_sets": break_between_sets, "break_after_exercise": break_after_exercise, "weekdays": days})
+
         result.append({"id": plan.id, "name": plan.name, "weekdays": plan.weekdays, "duration": plan.duration, "goals": plan.goals, "exercises": exercises})
     return result

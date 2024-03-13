@@ -1,6 +1,6 @@
 import redis, json, asyncio
-from .user_services import get_workout_plans_db
-from fastapi import APIRouter, HTTPException, Depends, Header, WebSocket
+from .services import get_workout_plans_db
+from fastapi import APIRouter, HTTPException, WebSocket
 from .config import SessionLocal
 from .utils import get_current_user
 
@@ -37,8 +37,6 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
     await websocket.send_text("Connected successfully")
     user_workout_plans = get_workout_plans_db(db, user.id)
-
-    
 
     while 1:
         request = await websocket.receive_text()
@@ -101,5 +99,3 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             break
         # await websocket.send_text(json.dumps(r.get("status")))
             
-
-

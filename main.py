@@ -1,15 +1,16 @@
 import json, asyncio
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from sqlalchemy_utils import database_exists, create_database
 from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user, oauth2_scheme
-from core.models import User, Exercise, WorkoutPlan, ExerciseWorkout, Goal, WeightTracker
+from core.models import User, Exercise, WorkoutPlan, ExerciseWorkout, Goal, WeightTracker, Muscle
 from core.config import SessionLocal, engine, Base
-from core.schemas import UserSchema, WorkoutPlanSchema, GoalSchema, WeightTrackerSchema
+from core.schemas import WorkoutPlanSchema, GoalSchema, WeightTrackerSchema, GetExerciseSchema
 from seed_db import seed, clear
-from core.user_services import get_workout_plans_db
+from core.services import get_workout_plans_db
 from datetime import datetime
-from core.user_services import router as user_services
+from core.services import router as services
 from core.session_tracking import router as session_tracking
 
 app = FastAPI()
@@ -22,7 +23,7 @@ if not database_exists(engine.url):
 # seed()
 # clear()
 
-app.include_router(user_services)
+app.include_router(services)
 app.include_router(session_tracking)
 
 @app.post("/create_plan")
@@ -59,6 +60,43 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
     db.commit()
     return {"response": "created successfully"}
 
+@app.post("/edit_plan")
+async def edit_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
+    db_workout_plan = db.query(WorkoutPlan).filter_by(id=workout_plan.id).first()
+    if db_workout_plan is None:
+        raise HTTPException(status_code=400, detail="Plan not found")
+
+    if db_workout_plan.user_id != dependencies.id:
+        raise HTTPException(status_code=400, detail="You are not the owner of this plan")
+
+    db_workout_plan.name = workout_plan.name
+    db_workout_plan.weekdays = workout_plan.weekdays
+    db_workout_plan.duration = workout_plan.duration
+    db_workout_plan.goals = workout_plan.goals
+
+    db.query(ExerciseWorkout).filter_by(workout_id=workout_plan.id).delete()
+    db.commit()
+
+    last_order_num = 0
+    for exercise in workout_plan.exercises:
+        if exercise.order != last_order_num + 1:
+            raise HTTPException(status_code=400, detail="Order of exercises is not correct")
+        last_order_num = exercise.order
+
+        db_exercise_workout = ExerciseWorkout(
+            exercise_id = exercise.id,
+            workout_id = workout_plan.id,
+            repetitions = exercise.repetitions,
+            sets = exercise.sets,
+            break_between_sets = exercise.break_between_sets,
+            break_after_exercise = exercise.break_after_exercise,
+            order = exercise.order,
+        )
+        db_workout_plan.exercises.append(db_exercise_workout)
+        db.add(db_exercise_workout)
+    db.commit()
+    return {"response": "edited successfully"}
+
 @app.post("/create_goal")
 async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
     if goal.date is None:
@@ -75,7 +113,14 @@ async def create_goal(dependencies = Depends(get_current_user), db: Session = De
     db.add(db_goal)
     db.commit()
     return {"response": "Goal created successfully"}
- 
+
+@app.get("/get_workout_plans")
+async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = dependencies.id
+    workout_plans = await get_workout_plans_db(db, user_id)
+    return workout_plans
+    return []
+
 @app.post("/track_weight")
 async def track_weight(dependencies = Depends(get_current_user), db: Session = Depends(get_db), weight_info: WeightTrackerSchema = None):
     if weight_info.date is None:
@@ -92,8 +137,15 @@ async def track_weight(dependencies = Depends(get_current_user), db: Session = D
     return {"response": "Weight tracked successfully"}
 
 @app.post("/get_exercises")
-async def get_exercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    exercises = db.query(Exercise).all()
+async def get_exercises(dependencies = Depends(get_current_user), db: Session = Depends(get_db), exercise_data: GetExerciseSchema = None):
+    if exercise_data is not None:
+        if exercise_data.name is not None:
+            exercises = db.query(Exercise).filter(Exercise.name.ilike(f"%{exercise_data.name}%")).all()
+            
+        elif exercise_data.muscles is not None:
+            exercises = db.query(Exercise).join(Exercise.exercise_muscles).join(Muscle).filter(Muscle.name.in_(exercise_data.muscles)).all()
+    else:
+        exercises = db.query(Exercise).all()
 
     result = []
     for exercise in exercises:
@@ -102,10 +154,3 @@ async def get_exercises(dependencies = Depends(get_current_user), db: Session = 
             muscles.append(muscle.muscle.name)
         result.append({"id": exercise.id, "exercise": exercise.name, "muscles": muscles})
     return result
-
-@app.get("/get_workout_plans")
-async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    user_id = dependencies.id
-    workout_plans = get_workout_plans_db(db, user_id)
-    return workout_plans
-

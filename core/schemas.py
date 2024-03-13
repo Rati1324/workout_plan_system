@@ -33,3 +33,7 @@ class GoalSchema(BaseModel):
 class WeightTrackerSchema(BaseModel):
     weight: float = Field(default=None)
     date: str = Field(default=None, example="2022-01-01")
+
+class GetExerciseSchema(BaseModel):
+    name: str = Field(default=None)
+    muscles: List[str] = Field(default=None)
