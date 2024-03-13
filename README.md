@@ -27,6 +27,7 @@ Make sure you have the following software installed on your system:
 3. Access the FastAPI application in your browser:
     API documentation (Swagger): http://localhost:8000/docs
     Interactive ReDoc documentation: http://localhost:8000/redoc
+   
     Real-time workout session tracker documentation: http://localhost:8000/websocket_docs 
 
     You can now interact with and test your FastAPI application using the provided documentation.
