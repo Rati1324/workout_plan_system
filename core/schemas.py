@@ -26,7 +26,6 @@ class GoalSchema(BaseModel):
     weight: float = Field(default=None)
     sets: int = Field(default=None)
     repetitions: int = Field(default=None)
-    repetitions: int = Field(default=None)
     achieved: bool = Field(default=False)
     date: str = Field(default=None)
 
@@ -35,5 +34,5 @@ class WeightTrackerSchema(BaseModel):
     date: str = Field(default=None, example="2022-01-01")
 
 class GetExerciseSchema(BaseModel):
-    name: str = Field(default=None)
-    muscles: List[str] = Field(default=None)
+    name: str = Field(default="")
+    muscles: List[str] = Field(default=[])

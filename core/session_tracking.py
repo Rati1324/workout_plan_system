@@ -24,27 +24,25 @@ def finish_exercise(exercises):
 
 # r.flushall()
 @router.websocket("/workout_session")
-async def websocket_endpoint(websocket: WebSocket, token: str):
+async def websocket_endpoint(websocket: WebSocket, token: str, plan_id):
     await websocket.accept()
     db = SessionLocal()
     user = None
     try:
         user = get_current_user(db, token=token)
+        plan_id = int(plan_id)
+        cur_plan = await get_workout_plans_db(db, user.id, name=None, plan_id=plan_id)
+        cur_plan = cur_plan[0]
     except HTTPException:
-        await websocket.send_text("Invalid token")
+        await websocket.send_text("Invalid request")
         await websocket.close()
-        return None
 
     await websocket.send_text("Connected successfully")
-    user_workout_plans = await get_workout_plans_db(db, user.id)
-
     while 1:
         request = await websocket.receive_text()
 
         json_request = json.loads(request)
         action = json_request["action"]
-        if "plan_id" in json_request:
-            cur_plan = [plan for plan in user_workout_plans if plan["id"] == json_request["plan_id"]][0]
 
         if action == "start_session":
             cur_exercise = cur_plan["exercises"][0]

@@ -32,10 +32,11 @@ def clear():
     db.commit()
     db.close()
 
-#     {
+
+# {
 #   "name": "string",
-#   "frequency": 0,
-#   "duration": 0,
+#   "duration": 60,
+#   "weekdays": "0100100",
 #   "goals": "string",
 #   "exercises": [
 #     {

@@ -53,8 +53,13 @@ async def login(db: Session = Depends(get_db), user_data: OAuth2PasswordRequestF
     token = create_jwt_token(user_data.username)
     return {"access_token": token, "token_type": "bearer"}
 
-async def get_workout_plans_db(db: Session, user_id: int):
-    workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
+async def get_workout_plans_db(db: Session, user_id: int, name: str = None, plan_id: int = None):
+    if name is not None:
+        workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id, name=name).all()
+    elif plan_id is not None:
+        workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id, id=plan_id).all()
+    else:
+        workout_plans = db.query(WorkoutPlan).filter_by(user_id=user_id).all()
     result = []
 
     weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
