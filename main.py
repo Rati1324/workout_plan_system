@@ -109,7 +109,8 @@ async def get_workout_plans(dependencies = Depends(get_current_user), db: Sessio
 async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
     if goal.date is None:
         goal.date = datetime.now()
-        db_goal = Goal(
+
+    db_goal = Goal(
         user_id = dependencies.id,
         exercise_id = goal.exercise_id,
         weight = goal.weight,
@@ -121,6 +122,38 @@ async def create_goal(dependencies = Depends(get_current_user), db: Session = De
     db.add(db_goal)
     db.commit()
     return {"response": "Goal created successfully"}
+
+@app.put("/edit_goal")
+async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
+    db_goal = db.query(Goal).filter_by(id=goal.id).first()
+    if db_goal is None:
+        raise HTTPException(status_code=400, detail="Goal not found")
+
+    if db_goal.user_id != dependencies.id:
+        raise HTTPException(status_code=400, detail="You are not the owner of this goal")
+
+    db_goal.exercise_id = goal.exercise_id
+    db_goal.weight = goal.weight
+    db_goal.sets = goal.sets
+    db_goal.repetitions = goal.repetitions
+    db_goal.achieved = goal.achieved
+    db_goal.date = goal.date
+    db.commit()
+    return {"response": "Goal edited successfully"}
+
+@app.delete("/delete_goal")
+async def delete_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal_id: int = None):
+    db_goal = db.query(Goal).filter_by(id=goal_id).first()
+    if db_goal is None:
+        raise HTTPException(status_code=400, detail="Goal not found")
+
+    if db_goal.user_id != dependencies.id:
+        raise HTTPException(status_code=400, detail="You are not the owner of this goal")
+
+    db.delete(db_goal)
+    db.commit()
+    return {"response": "Goal deleted successfully"}
+
 
 @app.post("/track_weight")
 async def track_weight(dependencies = Depends(get_current_user), db: Session = Depends(get_db), weight_info: WeightTrackerSchema = None):
