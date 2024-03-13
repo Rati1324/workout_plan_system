@@ -7,6 +7,7 @@ from .utils import get_current_user
 r = redis.Redis(host='redis_service', port=6379, decode_responses=True)
 
 router = APIRouter()
+
 def finish_set():
     cur_set = int(r.get("cur_set"))
     r.set("break", r.get("break_between_sets"))
@@ -121,4 +122,4 @@ async def websocket_endpoint(websocket: WebSocket, token: str, plan_id):
         
         if r.get("status") == "session_ended":
             break
-            
+

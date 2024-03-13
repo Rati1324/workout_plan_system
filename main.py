@@ -10,8 +10,10 @@ from core.schemas import WorkoutPlanSchema, GoalSchema, WeightTrackerSchema, Get
 from core.services import get_workout_plans_db
 from datetime import datetime
 from core.services import router as services
+from fastapi.responses import HTMLResponse
 from core.session_tracking import router as session_tracking
 from seed_db import seed, clear
+import markdown
 
 app = FastAPI()
 
@@ -147,3 +149,11 @@ async def get_exercises(dependencies = Depends(get_current_user), db: Session = 
         exercises = db.query(Exercise).all()
 
     return exercises
+
+
+@app.get("/websocket_docs/", response_class=HTMLResponse)
+async def get_docs():
+    with open("websocket_docs.md", "r") as file:
+        md_content = file.read()
+    html_content = markdown.markdown(md_content)
+    return html_content
