@@ -33,6 +33,8 @@ Make sure you have the following software installed on your system:
     
     Real-time workout session tracker documentation: http://localhost:8000/websocket_docs 
 
+Use /login endpoint to get the token for the websocket endpoint authentication.
+Otherwise use the swagger Authorize method.
 You can now interact with and test your FastAPI application using the provided documentation.
 
 To stop the application and remove the Docker containers, press Ctrl+C in the terminal where docker-compose up is running, and then run:
