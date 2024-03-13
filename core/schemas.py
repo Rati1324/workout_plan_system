@@ -15,7 +15,7 @@ class ExerciseWorkoutSchema(BaseModel):
 
 class WorkoutPlanSchema(BaseModel):
     name: str = Field(default=None)
-    weekdays: str = Field(default=None)
+    weekdays: str = Field(default=None, example="example: 1010000 means the workout is only on monday and wednesday")
     duration: float = Field(default=None)
     goals: str = Field(default=None)
     exercises: List[ExerciseWorkoutSchema] = Field(default=None)

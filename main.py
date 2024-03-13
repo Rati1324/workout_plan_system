@@ -98,7 +98,11 @@ async def edit_plan(dependencies = Depends(get_current_user), db: Session = Depe
     return {"response": "edited successfully"}
 
 @app.get("/get_workout_plans")
-async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db), name:str = None):
+    if name is not None:
+        user_id = dependencies.id
+        workout_plans = db.query(WorkoutPlan).filter(WorkoutPlan.name.ilike(f"%{name}%"), WorkoutPlan.user_id == user_id).all()
+        return workout_plans
     user_id = dependencies.id
     workout_plans = await get_workout_plans_db(db, user_id)
     return workout_plans
