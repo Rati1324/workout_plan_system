@@ -60,7 +60,7 @@ async def create_plan(dependencies = Depends(get_current_user), db: Session = De
     db.commit()
     return {"response": "created successfully"}
 
-@app.post("/edit_plan")
+@app.put("/edit_plan")
 async def edit_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
     db_workout_plan = db.query(WorkoutPlan).filter_by(id=workout_plan.id).first()
     if db_workout_plan is None:
@@ -97,6 +97,12 @@ async def edit_plan(dependencies = Depends(get_current_user), db: Session = Depe
     db.commit()
     return {"response": "edited successfully"}
 
+@app.get("/get_workout_plans")
+async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_id = dependencies.id
+    workout_plans = await get_workout_plans_db(db, user_id)
+    return workout_plans
+
 @app.post("/create_goal")
 async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
     if goal.date is None:
@@ -113,12 +119,6 @@ async def create_goal(dependencies = Depends(get_current_user), db: Session = De
     db.add(db_goal)
     db.commit()
     return {"response": "Goal created successfully"}
-
-@app.get("/get_workout_plans")
-async def get_workout_plans(dependencies = Depends(get_current_user), db: Session = Depends(get_db)):
-    user_id = dependencies.id
-    workout_plans = await get_workout_plans_db(db, user_id)
-    return workout_plans
 
 @app.post("/track_weight")
 async def track_weight(dependencies = Depends(get_current_user), db: Session = Depends(get_db), weight_info: WeightTrackerSchema = None):
