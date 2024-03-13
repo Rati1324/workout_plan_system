@@ -105,6 +105,19 @@ async def get_workout_plans(dependencies = Depends(get_current_user), db: Sessio
     workout_plans = await get_workout_plans_db(db, user_id, name)
     return workout_plans
 
+@app.delete("/delete_plan")
+async def delete_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), plan_id: int = None):
+    db_workout_plan = db.query(WorkoutPlan).filter_by(id=plan_id).first()
+    if db_workout_plan is None:
+        raise HTTPException(status_code=400, detail="Plan not found")
+
+    if db_workout_plan.user_id != dependencies.id:
+        raise HTTPException(status_code=400, detail="You are not the owner of this plan")
+
+    db.delete(db_workout_plan)
+    db.commit()
+    return {"response": "Plan deleted successfully"}
+
 @app.post("/create_goal")
 async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
     if goal.date is None:
