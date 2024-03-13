@@ -1,12 +1,12 @@
-from .models import User, Exercise
-from fastapi import APIRouter, HTTPException, Depends, Header
+import re
+from .models import User, WorkoutPlan
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from .utils import get_db
-import re
 from datetime import timedelta
 from typing import Optional
-from .schemas import UserSchema
+from .schemas import UserSchema, WorkoutPlanSchema
 from .utils import (
     get_hashed_password, create_jwt_token, get_current_user
 )

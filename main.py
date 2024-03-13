@@ -10,6 +10,7 @@ from seed_db import seed, clear
 from core.user_services import get_workout_plans_db
 from datetime import datetime
 from core.user_services import router as user_services
+from core.session_tracking import router as session_tracking
 
 app = FastAPI()
 
@@ -22,6 +23,7 @@ if not database_exists(engine.url):
 # clear()
 
 app.include_router(user_services)
+app.include_router(session_tracking)
 
 @app.post("/create_plan")
 async def create_plan(dependencies = Depends(get_current_user), db: Session = Depends(get_db), workout_plan: WorkoutPlanSchema = None):
