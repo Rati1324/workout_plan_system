@@ -1,17 +1,17 @@
 import json, asyncio
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy_utils import database_exists, create_database
-from core.utils import get_db, get_hashed_password, create_jwt_token, get_current_user, oauth2_scheme
-from core.models import User, Exercise, WorkoutPlan, ExerciseWorkout, Goal, WeightTracker, Muscle
+from core.utils import get_db, get_current_user
+from core.models import User, Exercise, WorkoutPlan, ExerciseWorkout, Goal, WeightTracker, Muscle, ExerciseMuscle
 from core.config import SessionLocal, engine, Base
 from core.schemas import WorkoutPlanSchema, GoalSchema, WeightTrackerSchema, GetExerciseSchema
-from seed_db import seed, clear
 from core.services import get_workout_plans_db
 from datetime import datetime
 from core.services import router as services
 from core.session_tracking import router as session_tracking
+from seed_db import seed, clear
 
 app = FastAPI()
 
@@ -101,7 +101,7 @@ async def edit_plan(dependencies = Depends(get_current_user), db: Session = Depe
 async def create_goal(dependencies = Depends(get_current_user), db: Session = Depends(get_db), goal: GoalSchema = None):
     if goal.date is None:
         goal.date = datetime.now()
-    db_goal = Goal(
+        db_goal = Goal(
         user_id = dependencies.id,
         exercise_id = goal.exercise_id,
         weight = goal.weight,
@@ -119,7 +119,6 @@ async def get_workout_plans(dependencies = Depends(get_current_user), db: Sessio
     user_id = dependencies.id
     workout_plans = await get_workout_plans_db(db, user_id)
     return workout_plans
-    return []
 
 @app.post("/track_weight")
 async def track_weight(dependencies = Depends(get_current_user), db: Session = Depends(get_db), weight_info: WeightTrackerSchema = None):
@@ -141,16 +140,10 @@ async def get_exercises(dependencies = Depends(get_current_user), db: Session = 
     if exercise_data is not None:
         if exercise_data.name is not None:
             exercises = db.query(Exercise).filter(Exercise.name.ilike(f"%{exercise_data.name}%")).all()
-            
+
         elif exercise_data.muscles is not None:
-            exercises = db.query(Exercise).join(Exercise.exercise_muscles).join(Muscle).filter(Muscle.name.in_(exercise_data.muscles)).all()
+            exercises = db.query(Exercise).join(Exercise.exercise_muscles).join(Muscle).filter(or_(*[Muscle.name.like(f"%{m}%") for m in exercise_data.muscles])).all()
     else:
         exercises = db.query(Exercise).all()
 
-    result = []
-    for exercise in exercises:
-        muscles = []
-        for muscle in exercise.exercise_muscles:
-            muscles.append(muscle.muscle.name)
-        result.append({"id": exercise.id, "exercise": exercise.name, "muscles": muscles})
-    return result
+    return exercises
